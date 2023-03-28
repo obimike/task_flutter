@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:task/pages/task.dart';
+import 'package:task/pages/splash.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         scaffoldBackgroundColor: Colors.black26,
       ),
-      home: const Task(),
+      home: const Splash(),
     );
   }
 }

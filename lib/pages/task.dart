@@ -102,7 +102,7 @@ class Task extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: ListView(
-                  padding: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: 32),
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(top: 8),
@@ -114,7 +114,7 @@ class Task extends StatelessWidget {
                           fontWeight: FontWeight.w300,
                           fontStyle: FontStyle.normal,
                         ),
-                        textAlign: TextAlign.left,
+                        textAlign: TextAlign.center,
                       ),
                     ),
                     TaskItem(
@@ -133,6 +133,21 @@ class Task extends StatelessWidget {
                             .format(DateTime.now())
                             .toString(),
                         priority: "High"),
+                    TaskItem(
+                        taskTitle: "Kickstart your career",
+                        isChecked: true,
+                        dateStamp: DateFormat('dd/M/yy - h:mma')
+                            .format(DateTime.now())
+                            .toString(),
+                        priority: "Low"),
+                    TaskItem(
+                        taskTitle:
+                            "Flutter/Dart: Pass Parameters to a Stateful Widget?",
+                        isChecked: false,
+                        dateStamp: DateFormat('dd/M/yy - h:mma')
+                            .format(DateTime.now())
+                            .toString(),
+                        priority: "Medium"),
                   ],
                 ),
               ),
@@ -174,25 +189,33 @@ class TaskItem extends StatefulWidget {
 }
 
 class _TaskItem extends State<TaskItem> {
-  // Color textColor = isChecked ? Colors.white24 : Colors.white;
-  Color textColor = Colors.white;
-
   // static get isChecked => null;
 
   void toggleCheckbox(bool value) {
     if (value) {
       setState(() {
         widget.isChecked = true;
-        textColor = Colors.white24;
       });
       debugPrint("$value");
     } else {
       setState(() {
         widget.isChecked = false;
-        textColor = Colors.white;
       });
       debugPrint("$value");
     }
+  }
+
+  Color _setTextColor() {
+    Color textColor;
+    if (widget.priority == "High") {
+      textColor = Colors.red;
+    } else if (widget.priority == "Medium") {
+      textColor = Colors.yellow;
+    } else {
+      textColor = Colors.green;
+    }
+
+    return textColor;
   }
 
   @override
@@ -228,15 +251,23 @@ class _TaskItem extends State<TaskItem> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  widget.taskTitle,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
-                    fontStyle: FontStyle.normal,
-                    letterSpacing: -0.24,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.taskTitle,
+                        style: TextStyle(
+                          color:
+                              widget.isChecked ? Colors.white24 : Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                          fontStyle: FontStyle.normal,
+                          letterSpacing: -0.24,
+                        ),
+                        textAlign: TextAlign.start,
+                      ),
+                    ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -245,9 +276,9 @@ class _TaskItem extends State<TaskItem> {
                     children: [
                       Text(
                         widget.priority,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xffCE5E5E),
+                          color: _setTextColor(),
                           fontWeight: FontWeight.w500,
                           fontStyle: FontStyle.normal,
                           letterSpacing: -0.24,
