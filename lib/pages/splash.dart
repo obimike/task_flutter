@@ -6,11 +6,11 @@ class Splash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Future.delayed(const Duration(seconds: 3)).then((_) {
-    //   Navigator.of(context).pushReplacement(
-    //     MaterialPageRoute(builder: (context) => const Task()),
-    //   );
-    // });
+    Future.delayed(const Duration(seconds: 3)).then((_) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const Task()),
+      );
+    });
 
     return Scaffold(
       body: Column(
@@ -22,7 +22,7 @@ class Splash extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 48,
                   color: Colors.white,
-                  fontWeight: FontWeight.w300,
+                  fontWeight: FontWeight.w400,
                   fontStyle: FontStyle.normal,
                 ),
                 textAlign: TextAlign.center,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:task/pages/splash.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // init();
   runApp(const MyApp());
 }
 
@@ -21,3 +23,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// Future<void> init() async {
+
+// }

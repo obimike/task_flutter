@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:task/pages/add_task.dart';
 
+import 'package:fluttertoast/fluttertoast.dart';
+
 class Task extends StatelessWidget {
   const Task({super.key});
 
@@ -197,11 +199,13 @@ class _TaskItem extends State<TaskItem> {
         widget.isChecked = true;
       });
       debugPrint("$value");
+      _showToast("💪 Task is completed. Well Done 💪");
     } else {
       setState(() {
         widget.isChecked = false;
       });
       debugPrint("$value");
+      _showToast("Task is undone.");
     }
   }
 
@@ -216,6 +220,17 @@ class _TaskItem extends State<TaskItem> {
     }
 
     return textColor;
+  }
+
+  void _showToast(String msg) {
+    Fluttertoast.showToast(
+        msg: msg,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.SNACKBAR,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0);
   }
 
   @override
