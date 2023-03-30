@@ -47,7 +47,7 @@ class SQLHelper {
   // Read all items (journals)
   static Future<List<Map<String, dynamic>>> getItems() async {
     final db = await SQLHelper.db();
-    return db.query('items', orderBy: "id");
+    return db.query('task', orderBy: "id");
   }
 
   // Read a single item by id

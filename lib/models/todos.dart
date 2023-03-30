@@ -1,7 +1,7 @@
 class Tasks {
   final int id;
   final String title;
-  final bool isChecked;
+  final String isChecked;
   final String dateStamp;
   final String priority;
 

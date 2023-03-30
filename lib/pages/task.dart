@@ -3,9 +3,37 @@ import 'package:intl/intl.dart';
 import 'package:task/pages/add_task.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:task/utils/db_helper.dart';
 
-class Task extends StatelessWidget {
+class Task extends StatefulWidget {
   const Task({super.key});
+
+  @override
+  State<Task> createState() => _TaskState();
+}
+
+class _TaskState extends State<Task> {
+  // All journals
+  List<Map<String, dynamic>> _tasks = [];
+  bool _isLoading = true;
+
+  // This function is used to fetch all data from the database
+  void _refreshJournals() async {
+    final data = await SQLHelper.getItems();
+    setState(() {
+      _tasks = data;
+      _isLoading = false;
+    });
+    debugPrint("----------Title-----------");
+    debugPrint(data.toString());
+  }
+
+  @override
+  void initState() {
+    debugPrint("----------initState-----------");
+    super.initState();
+    _refreshJournals(); // Loading the diary when the app starts
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,54 +131,16 @@ class Task extends StatelessWidget {
                   ),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: ListView(
-                  padding: const EdgeInsets.only(bottom: 32),
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: Text(
-                        "All Tasks",
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w300,
-                          fontStyle: FontStyle.normal,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    TaskItem(
-                        taskTitle:
-                            "Top 3 Ways to Give Flutter Widget Size in Percentage (2023)",
-                        isChecked: true,
-                        dateStamp: DateFormat('dd/M/yy - h:mma')
-                            .format(DateTime.now())
-                            .toString(),
-                        priority: "Medium"),
-                    TaskItem(
-                        taskTitle:
-                            "how to pass a parameter to other stateful widget in flutter",
-                        isChecked: false,
-                        dateStamp: DateFormat('dd/M/yy - h:mma')
-                            .format(DateTime.now())
-                            .toString(),
-                        priority: "High"),
-                    TaskItem(
-                        taskTitle: "Kickstart your career",
-                        isChecked: true,
-                        dateStamp: DateFormat('dd/M/yy - h:mma')
-                            .format(DateTime.now())
-                            .toString(),
-                        priority: "Low"),
-                    TaskItem(
-                        taskTitle:
-                            "Flutter/Dart: Pass Parameters to a Stateful Widget?",
-                        isChecked: false,
-                        dateStamp: DateFormat('dd/M/yy - h:mma')
-                            .format(DateTime.now())
-                            .toString(),
-                        priority: "Medium"),
-                  ],
+                child: ListView.builder(
+                  itemCount: _tasks.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return TaskItem(
+                        id: _tasks[index]['id'],
+                        taskTitle: _tasks[index]['title'],
+                        isChecked: _tasks[index]['isDone'],
+                        dateStamp: _tasks[index]['createdAt'],
+                        priority: _tasks[index]['priority']);
+                  },
                 ),
               ),
             ),
@@ -174,13 +164,15 @@ class Task extends StatelessWidget {
 
 // ignore: must_be_immutable
 class TaskItem extends StatefulWidget {
+  final int id;
   final String taskTitle;
-  bool isChecked;
+  String isChecked;
   String dateStamp;
   String priority;
 
   TaskItem(
       {super.key,
+      required this.id,
       required this.taskTitle,
       required this.isChecked,
       required this.dateStamp,
@@ -196,13 +188,13 @@ class _TaskItem extends State<TaskItem> {
   void toggleCheckbox(bool value) {
     if (value) {
       setState(() {
-        widget.isChecked = true;
+        widget.isChecked = "true";
       });
       debugPrint("$value");
       _showToast("💪 Task is completed. Well Done 💪");
     } else {
       setState(() {
-        widget.isChecked = false;
+        widget.isChecked = "false";
       });
       debugPrint("$value");
       _showToast("Task is undone.");
@@ -256,7 +248,7 @@ class _TaskItem extends State<TaskItem> {
                 ),
               ),
               child: Checkbox(
-                value: widget.isChecked,
+                value: widget.isChecked == "true" ? true : false,
                 onChanged: (value) => toggleCheckbox(value!),
               ),
             ),
@@ -272,8 +264,9 @@ class _TaskItem extends State<TaskItem> {
                       child: Text(
                         widget.taskTitle,
                         style: TextStyle(
-                          color:
-                              widget.isChecked ? Colors.white24 : Colors.white,
+                          color: widget.isChecked == "true"
+                              ? Colors.white24
+                              : Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w300,
                           fontStyle: FontStyle.normal,
@@ -324,7 +317,7 @@ class _TaskItem extends State<TaskItem> {
                   backgroundColor:
                       MaterialStateColor.resolveWith((states) => Colors.green)),
               onPressed: () {
-                debugPrint("delete clicked");
+                debugPrint("delete clicked ${widget.id}");
               },
               icon: Icon(
                 Icons.delete,

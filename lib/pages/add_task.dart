@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:task/utils/db_helper.dart';
+
 class AddTask extends StatefulWidget {
   const AddTask({super.key});
 
@@ -9,6 +11,8 @@ class AddTask extends StatefulWidget {
 }
 
 class _AddTaskState extends State<AddTask> {
+  final TextEditingController _titleController = TextEditingController();
+
   static const items = [
     'High',
     'Medium',
@@ -17,6 +21,21 @@ class _AddTaskState extends State<AddTask> {
 
   // Initial Selected Value
   String dropdownvalue = items[0];
+
+  addNewTask() async {
+    debugPrint(_titleController.text);
+    if (_titleController.text.isEmpty) {
+      debugPrint("Title can not be empty");
+    } else {
+      debugPrint(_titleController.text);
+      final data = await SQLHelper.createItem(
+          _titleController.text,
+          "false",
+          dropdownvalue,
+          DateFormat('dd/M/yy - h:mma').format(DateTime.now()).toString());
+      debugPrint(data.toString());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +97,10 @@ class _AddTaskState extends State<AddTask> {
                         ),
                       ],
                     ),
-                    const TextField(
-                      style: TextStyle(fontSize: 18),
-                      decoration: InputDecoration(
+                    TextField(
+                      controller: _titleController,
+                      style: const TextStyle(fontSize: 18),
+                      decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         fillColor: Colors.white,
                         filled: true,
@@ -155,6 +175,7 @@ class _AddTaskState extends State<AddTask> {
                       ),
                       onPressed: () {
                         debugPrint("Button");
+                        addNewTask();
                       },
                       child: const Text(
                         "Add Task",
