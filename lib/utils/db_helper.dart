@@ -47,7 +47,10 @@ class SQLHelper {
   // Read all items (journals)
   static Future<List<Map<String, dynamic>>> getItems() async {
     final db = await SQLHelper.db();
-    return db.query('task', orderBy: "id");
+    return db.query(
+      'task',
+      orderBy: "id DESC",
+    );
   }
 
   // Read a single item by id
@@ -66,7 +69,7 @@ class SQLHelper {
     };
 
     final result =
-        await db.update('items', data, where: "id = ?", whereArgs: [id]);
+        await db.update('task', data, where: "id = ?", whereArgs: [id]);
     return result;
   }
 

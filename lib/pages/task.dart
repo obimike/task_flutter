@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:task/pages/add_task.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
@@ -185,19 +184,25 @@ class TaskItem extends StatefulWidget {
 class _TaskItem extends State<TaskItem> {
   // static get isChecked => null;
 
-  void toggleCheckbox(bool value) {
+  void toggleCheckbox(bool value, int _id) async {
     if (value) {
       setState(() {
         widget.isChecked = "true";
       });
       debugPrint("$value");
-      _showToast("💪 Task is completed. Well Done 💪");
+      final updateTask = await SQLHelper.updateItem(_id, "true");
+      if (updateTask >= 1) {
+        _showToast("💪 Task is completed. Well Done 💪");
+      }
     } else {
       setState(() {
         widget.isChecked = "false";
       });
       debugPrint("$value");
-      _showToast("Task is undone.");
+      final updateTask = await SQLHelper.updateItem(_id, "false");
+      if (updateTask >= 1) {
+        _showToast("Task is undone.");
+      }
     }
   }
 
@@ -225,6 +230,24 @@ class _TaskItem extends State<TaskItem> {
         fontSize: 16.0);
   }
 
+  void _showAlertDialog(BuildContext context, int _id) {
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Alert"),
+      content: Text("This is an alert dialog."),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'Cancel'),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'OK'),
+          child: const Text('OK'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -249,7 +272,7 @@ class _TaskItem extends State<TaskItem> {
               ),
               child: Checkbox(
                 value: widget.isChecked == "true" ? true : false,
-                onChanged: (value) => toggleCheckbox(value!),
+                onChanged: (value) => toggleCheckbox(value!, widget.id),
               ),
             ),
           ),
@@ -313,12 +336,27 @@ class _TaskItem extends State<TaskItem> {
           Expanded(
             flex: 2,
             child: IconButton(
-              style: ButtonStyle(
-                  backgroundColor:
-                      MaterialStateColor.resolveWith((states) => Colors.green)),
-              onPressed: () {
-                debugPrint("delete clicked ${widget.id}");
-              },
+              // onPressed: () {
+              //   debugPrint("delete clicked ${widget.id}");
+              //   _showAlertDialog(context, widget.id);
+              // },
+              onPressed: () => showDialog<String>(
+                context: context,
+                builder: (BuildContext context) => AlertDialog(
+                  title: const Text('AlertDialog Title'),
+                  content: const Text('AlertDialog description'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'Cancel'),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'OK'),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              ),
               icon: Icon(
                 Icons.delete,
                 color: Colors.red[800],

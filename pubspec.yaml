@@ -32,7 +32,6 @@ dependencies:
     sdk: flutter
   intl: ^0.17.0 # for date formatting
   sqflite: ^2.2.6
-  path:
   fluttertoast: ^8.2.1
 
   # The following adds the Cupertino Icons font to your application.
