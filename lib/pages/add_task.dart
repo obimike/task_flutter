@@ -2,14 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:task/pages/task.dart';
 
 import 'package:task/utils/db_helper.dart';
 
 class AddTask extends StatefulWidget {
   final Function refreshTasks;
 
-  AddTask({super.key, required this.refreshTasks});
+  const AddTask({super.key, required this.refreshTasks});
 
   @override
   State<AddTask> createState() => _AddTaskState();

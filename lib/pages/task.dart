@@ -18,11 +18,32 @@ class _TaskState extends State<Task> {
   List<Map<String, dynamic>> _filteredData = [];
   List<Map<String, dynamic>> _data = [];
 
+  int uncompletedTask = 0;
+  int completedTask = 0;
+  double _progress = 0.0;
+
+  void _getValue(List<Map<String, dynamic>> data) {
+    List<Map<String, dynamic>> completeResults = [];
+    List<Map<String, dynamic>> uncompleteResults = [];
+    completeResults = data.where((data) => data["isDone"] == "true").toList();
+    uncompleteResults =
+        data.where((data) => data["isDone"] == "false").toList();
+
+    double pBar = ((data.length - uncompleteResults.length) / data.length);
+
+    setState(() {
+      completedTask = completeResults.length;
+      uncompletedTask = uncompleteResults.length;
+      _progress = pBar;
+    });
+  }
+
   // This function is used to fetch all data from the database
   void _refreshTasks() async {
     debugPrint("----------_refreshTasks-----------");
     final data = await SQLHelper.getItems();
     debugPrint(data.toString());
+    _getValue(data);
     setState(() {
       _data = data;
       _filteredData = data;
@@ -94,17 +115,16 @@ class _TaskState extends State<Task> {
         body: Column(
           children: [
             Expanded(
-              flex: 0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     Row(
-                      children: const [
+                      children: [
                         Expanded(
                           child: Text(
-                            "Good day, you have 4 task yet to be completed.",
-                            style: TextStyle(
+                            "Good day, you have '$uncompletedTask' task yet to be completed.",
+                            style: const TextStyle(
                               fontSize: 24,
                               color: Colors.white,
                               fontWeight: FontWeight.w400,
@@ -144,29 +164,32 @@ class _TaskState extends State<Task> {
                           child: Text(
                             "Task Progress",
                             style: TextStyle(
-                                fontSize: 24,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w300,
-                                fontStyle: FontStyle.normal),
+                              fontSize: 24,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w300,
+                              fontStyle: FontStyle.normal,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: LinearProgressIndicator(
-                        minHeight: 6,
-                        value:
-                            0.75, // Set a value between 0.0 and 1.0 to indicate progress
-                        backgroundColor: Colors
-                            .white, // Set the background color of the progress bar
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(
-                            0xFF27272C)), // Set the color of the progress bar
-                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: StatefulBuilder(builder:
+                          (BuildContext context, StateSetter setState) {
+                        return LinearProgressIndicator(
+                          value:
+                              _progress, // Set a value between 0.0 and 1.0 to indicate progress
+                          backgroundColor: Colors
+                              .white, // Set the background color of the progress bar
+                          valueColor: const AlwaysStoppedAnimation<Color>(Color(
+                              0xFF27272C)), // Set the color of the progress bar
+                        );
+                      }),
                     ),
-                    const Text(
-                      "(75%)",
-                      style: TextStyle(
+                    Text(
+                      ("(${(_progress * 100).toStringAsFixed(0)}%)"),
+                      style: const TextStyle(
                           fontSize: 20,
                           color: Colors.white,
                           fontWeight: FontWeight.w300,
@@ -179,7 +202,6 @@ class _TaskState extends State<Task> {
             Expanded(
               flex: 1,
               child: Container(
-                width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Color(0xFF27272C),
                   borderRadius: BorderRadius.only(
@@ -188,38 +210,9 @@ class _TaskState extends State<Task> {
                   ),
                 ),
                 padding: const EdgeInsets.all(16),
-                // child: _isLoading
-                //     ? const Center(
-                //         child: CircularProgressIndicator(),
-                //       )
-                //     : ListView.builder(
-                //         itemCount: _filteredData.length,
-                //         itemBuilder: (context, index) => Card(
-                //           color: Colors.orange[200],
-                //           margin: const EdgeInsets.all(15),
-                //           child: ListTile(
-                //               title: Text(_filteredData[index]['title']),
-                //               trailing: SizedBox(
-                //                 width: 100,
-                //                 child: Row(
-                //                   children: [
-                //                     IconButton(
-                //                       icon: const Icon(Icons.edit),
-                //                       onPressed: () {},
-                //                     ),
-                //                     IconButton(
-                //                       icon: const Icon(Icons.delete),
-                //                       onPressed: () => _deleteTask(
-                //                           _filteredData[index]['id']),
-                //                     ),
-                //                   ],
-                //                 ),
-                //               )),
-                //         ),
-                //       ),
-
                 child: _filteredData.isNotEmpty
                     ? ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 32),
                         itemCount: _filteredData.length,
                         itemBuilder: (BuildContext context, int index) {
                           // return TaskItem(
@@ -230,7 +223,7 @@ class _TaskState extends State<Task> {
                               isChecked: _filteredData[index]['isDone'],
                               dateStamp: _filteredData[index]['createdAt'],
                               priority: _filteredData[index]['priority'],
-                              tasks: _filteredData,
+                              refresh: _refreshTasks,
                               deleteTask: _deleteTask);
                         },
                       )
@@ -269,7 +262,7 @@ class TaskItem extends StatefulWidget {
   String dateStamp;
   String priority;
 
-  List<Map<String, dynamic>> tasks;
+  Function refresh;
   Function deleteTask;
 
   TaskItem({
@@ -279,7 +272,7 @@ class TaskItem extends StatefulWidget {
     required this.isChecked,
     required this.dateStamp,
     required this.priority,
-    required this.tasks,
+    required this.refresh,
     required this.deleteTask,
   });
 
@@ -297,6 +290,7 @@ class _TaskItem extends State<TaskItem> {
       final updateTask = await SQLHelper.updateItem(id, "true");
       if (updateTask >= 1) {
         _showToast("💪 Task is completed. Well Done 💪");
+        widget.refresh();
       }
     } else {
       setState(() {
@@ -306,6 +300,7 @@ class _TaskItem extends State<TaskItem> {
       final updateTask = await SQLHelper.updateItem(id, "false");
       if (updateTask >= 1) {
         _showToast("Task is undone.");
+        widget.refresh();
       }
     }
   }
