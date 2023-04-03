@@ -115,6 +115,7 @@ class _TaskState extends State<Task> {
         body: Column(
           children: [
             Expanded(
+              flex: 0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -175,20 +176,23 @@ class _TaskState extends State<Task> {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: StatefulBuilder(builder:
-                          (BuildContext context, StateSetter setState) {
-                        return LinearProgressIndicator(
-                          value:
-                              _progress, // Set a value between 0.0 and 1.0 to indicate progress
-                          backgroundColor: Colors
-                              .white, // Set the background color of the progress bar
-                          valueColor: const AlwaysStoppedAnimation<Color>(Color(
-                              0xFF27272C)), // Set the color of the progress bar
-                        );
-                      }),
+                      child: StatefulBuilder(
+                        builder: (BuildContext context, StateSetter setState) {
+                          return LinearProgressIndicator(
+                            value: _progress >= 0.0
+                                ? _progress
+                                : 0.0, // Set a value between 0.0 and 1.0 to indicate progress
+                            backgroundColor: Colors
+                                .white, // Set the background color of the progress bar
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF27272C),
+                            ), // Set the color of the progress bar
+                          );
+                        },
+                      ),
                     ),
                     Text(
-                      ("(${(_progress * 100).toStringAsFixed(0)}%)"),
+                      ("(${(_progress >= 0.0 ? _progress * 100 : 0.0).toStringAsFixed(0)}%)"),
                       style: const TextStyle(
                           fontSize: 20,
                           color: Colors.white,
