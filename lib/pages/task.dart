@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:task/pages/add_task.dart';
 
@@ -13,25 +15,76 @@ class Task extends StatefulWidget {
 
 class _TaskState extends State<Task> {
   // All journals
-  List<Map<String, dynamic>> _tasks = [];
-  bool _isLoading = true;
+  List<Map<String, dynamic>> _filteredData = [];
+  List<Map<String, dynamic>> _data = [];
 
   // This function is used to fetch all data from the database
-  void _refreshJournals() async {
+  void _refreshTasks() async {
+    debugPrint("----------_refreshTasks-----------");
     final data = await SQLHelper.getItems();
-    setState(() {
-      _tasks = data;
-      _isLoading = false;
-    });
-    debugPrint("----------Title-----------");
     debugPrint(data.toString());
+    setState(() {
+      _data = data;
+      _filteredData = data;
+    });
+    debugPrint(data.toString());
+  }
+
+  Future<void> _deleteTask(int id) async {
+    final result = await SQLHelper.deleteItem(id);
+    if (result > 0) {
+      _refreshTasks();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Successfully deleted a task!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to delet this task!'),
+        ),
+      );
+    }
   }
 
   @override
   void initState() {
     debugPrint("----------initState-----------");
     super.initState();
-    _refreshJournals(); // Loading the diary when the app starts
+    _refreshTasks();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  TextEditingController searchController = TextEditingController();
+
+  // This function is called whenever the text field changes
+  void _filterData(String enteredKeyword) {
+    List<Map<String, dynamic>> results = [];
+    if (enteredKeyword.isEmpty) {
+      // if the search field is empty or only contains white-space, we'll display all users
+      results = _data;
+    } else {
+      results = _data
+          .where((data) => data["title"]
+              .toLowerCase()
+              .contains(enteredKeyword.toLowerCase()))
+          .toList();
+      // we use the toLowerCase() method to make it case-insensitive
+    }
+
+    // Refresh the UI
+    setState(() {
+      _filteredData = results;
+    });
   }
 
   @override
@@ -50,7 +103,7 @@ class _TaskState extends State<Task> {
                       children: const [
                         Expanded(
                           child: Text(
-                            "Good day, you have 4 task yet to be complete.",
+                            "Good day, you have 4 task yet to be completed.",
                             style: TextStyle(
                               fontSize: 24,
                               color: Colors.white,
@@ -61,13 +114,17 @@ class _TaskState extends State<Task> {
                         ),
                       ],
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
                         vertical: 24,
                       ),
                       child: TextField(
-                        style: TextStyle(fontSize: 18),
-                        decoration: InputDecoration(
+                        controller: searchController,
+                        onChanged: (String keyword) {
+                          _filterData(keyword);
+                        },
+                        style: const TextStyle(fontSize: 18),
+                        decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           fillColor: Colors.white,
                           filled: true,
@@ -122,6 +179,7 @@ class _TaskState extends State<Task> {
             Expanded(
               flex: 1,
               child: Container(
+                width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Color(0xFF27272C),
                   borderRadius: BorderRadius.only(
@@ -130,17 +188,58 @@ class _TaskState extends State<Task> {
                   ),
                 ),
                 padding: const EdgeInsets.all(16),
-                child: ListView.builder(
-                  itemCount: _tasks.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return TaskItem(
-                        id: _tasks[index]['id'],
-                        taskTitle: _tasks[index]['title'],
-                        isChecked: _tasks[index]['isDone'],
-                        dateStamp: _tasks[index]['createdAt'],
-                        priority: _tasks[index]['priority']);
-                  },
-                ),
+                // child: _isLoading
+                //     ? const Center(
+                //         child: CircularProgressIndicator(),
+                //       )
+                //     : ListView.builder(
+                //         itemCount: _filteredData.length,
+                //         itemBuilder: (context, index) => Card(
+                //           color: Colors.orange[200],
+                //           margin: const EdgeInsets.all(15),
+                //           child: ListTile(
+                //               title: Text(_filteredData[index]['title']),
+                //               trailing: SizedBox(
+                //                 width: 100,
+                //                 child: Row(
+                //                   children: [
+                //                     IconButton(
+                //                       icon: const Icon(Icons.edit),
+                //                       onPressed: () {},
+                //                     ),
+                //                     IconButton(
+                //                       icon: const Icon(Icons.delete),
+                //                       onPressed: () => _deleteTask(
+                //                           _filteredData[index]['id']),
+                //                     ),
+                //                   ],
+                //                 ),
+                //               )),
+                //         ),
+                //       ),
+
+                child: _filteredData.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: _filteredData.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          // return TaskItem(
+                          //     tasks: _filteredData, deleteTask: _deleteTask);
+                          return TaskItem(
+                              id: _filteredData[index]['id'],
+                              taskTitle: _filteredData[index]['title'],
+                              isChecked: _filteredData[index]['isDone'],
+                              dateStamp: _filteredData[index]['createdAt'],
+                              priority: _filteredData[index]['priority'],
+                              tasks: _filteredData,
+                              deleteTask: _deleteTask);
+                        },
+                      )
+                    : const Center(
+                        child: Text(
+                          'No results found',
+                          style: TextStyle(fontSize: 24, color: Colors.white70),
+                        ),
+                      ),
               ),
             ),
           ],
@@ -149,7 +248,8 @@ class _TaskState extends State<Task> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const AddTask()),
+              MaterialPageRoute(
+                  builder: (context) => AddTask(refreshTasks: _refreshTasks)),
             );
           },
           backgroundColor: Colors.white,
@@ -169,28 +269,32 @@ class TaskItem extends StatefulWidget {
   String dateStamp;
   String priority;
 
-  TaskItem(
-      {super.key,
-      required this.id,
-      required this.taskTitle,
-      required this.isChecked,
-      required this.dateStamp,
-      required this.priority});
+  List<Map<String, dynamic>> tasks;
+  Function deleteTask;
+
+  TaskItem({
+    super.key,
+    required this.id,
+    required this.taskTitle,
+    required this.isChecked,
+    required this.dateStamp,
+    required this.priority,
+    required this.tasks,
+    required this.deleteTask,
+  });
 
   @override
   State<TaskItem> createState() => _TaskItem();
 }
 
 class _TaskItem extends State<TaskItem> {
-  // static get isChecked => null;
-
-  void toggleCheckbox(bool value, int _id) async {
+  void toggleCheckbox(bool value, int id) async {
     if (value) {
       setState(() {
         widget.isChecked = "true";
       });
       debugPrint("$value");
-      final updateTask = await SQLHelper.updateItem(_id, "true");
+      final updateTask = await SQLHelper.updateItem(id, "true");
       if (updateTask >= 1) {
         _showToast("💪 Task is completed. Well Done 💪");
       }
@@ -199,7 +303,7 @@ class _TaskItem extends State<TaskItem> {
         widget.isChecked = "false";
       });
       debugPrint("$value");
-      final updateTask = await SQLHelper.updateItem(_id, "false");
+      final updateTask = await SQLHelper.updateItem(id, "false");
       if (updateTask >= 1) {
         _showToast("Task is undone.");
       }
@@ -228,24 +332,6 @@ class _TaskItem extends State<TaskItem> {
         backgroundColor: Colors.white,
         textColor: Colors.black,
         fontSize: 16.0);
-  }
-
-  void _showAlertDialog(BuildContext context, int _id) {
-    // set up the AlertDialog
-    AlertDialog alert = AlertDialog(
-      title: Text("Alert"),
-      content: Text("This is an alert dialog."),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'Cancel'),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'OK'),
-          child: const Text('OK'),
-        ),
-      ],
-    );
   }
 
   @override
@@ -343,16 +429,24 @@ class _TaskItem extends State<TaskItem> {
               onPressed: () => showDialog<String>(
                 context: context,
                 builder: (BuildContext context) => AlertDialog(
-                  title: const Text('AlertDialog Title'),
-                  content: const Text('AlertDialog description'),
+                  title: const Text(
+                    'Delete Alert',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  content: Text(
+                    'Do you wish to delete task? \n \n"${widget.taskTitle}"',
+                  ),
                   actions: <Widget>[
                     TextButton(
-                      onPressed: () => Navigator.pop(context, 'Cancel'),
-                      child: const Text('Cancel'),
+                      onPressed: () => Navigator.pop(context, 'No'),
+                      child: const Text('No'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.pop(context, 'OK'),
-                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.pop(context, 'Yes');
+                        widget.deleteTask(widget.id);
+                      },
+                      child: const Text('Yes'),
                     ),
                   ],
                 ),

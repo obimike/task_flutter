@@ -1,10 +1,15 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:task/pages/task.dart';
 
 import 'package:task/utils/db_helper.dart';
 
 class AddTask extends StatefulWidget {
-  const AddTask({super.key});
+  final Function refreshTasks;
+
+  AddTask({super.key, required this.refreshTasks});
 
   @override
   State<AddTask> createState() => _AddTaskState();
@@ -22,18 +27,42 @@ class _AddTaskState extends State<AddTask> {
   // Initial Selected Value
   String dropdownvalue = items[0];
 
-  addNewTask() async {
+  Future<void> addNewTask() async {
     debugPrint(_titleController.text);
     if (_titleController.text.isEmpty) {
       debugPrint("Title can not be empty");
     } else {
       debugPrint(_titleController.text);
       final data = await SQLHelper.createItem(
-          _titleController.text,
-          "false",
-          dropdownvalue,
-          DateFormat('dd/M/yy - h:mma').format(DateTime.now()).toString());
+        _titleController.text,
+        "false",
+        dropdownvalue,
+        DateFormat('dd/M/yy - h:mma').format(DateTime.now()).toString(),
+      );
       debugPrint(data.toString());
+      if (data > 0) {
+        _titleController.text = "";
+        widget.refreshTasks();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Task added Successfully!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Unable to add task',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.red, fontSize: 18),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -49,7 +78,7 @@ class _AddTaskState extends State<AddTask> {
                 children: [
                   IconButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context, true);
                     },
                     icon: const Icon(Icons.arrow_back_ios_new,
                         color: Colors.white),
