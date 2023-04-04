@@ -233,7 +233,7 @@ class _TaskState extends State<Task> {
                       )
                     : const Center(
                         child: Text(
-                          'No results found',
+                          'No Task found',
                           style: TextStyle(fontSize: 24, color: Colors.white70),
                         ),
                       ),
